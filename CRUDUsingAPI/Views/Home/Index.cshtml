@@ -1,0 +1,270 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Add New USer Information</h2>
+<hr />
+<table class="table table-bordered">
+    <tr>
+        <td>
+            User Name
+        </td>
+        <td>
+            <input type="text" name="uname" value="" id="txtuname" class="form-control" />
+        </td>
+    </tr>
+    <tr>
+        <td>
+            User City
+        </td>
+        <td>
+            <input type="text" name="ucity" value="" id="txtucity" class="form-control" />
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <button id="btnSave" class="btn btn-danger">Add New User</button>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align:center; color:red;">
+            <b>User Details</b>
+        </td>
+    </tr>
+    <tr id="loader">
+        <td colspan="2">
+            <center>
+                <img src="~/Content/GD.gif" />
+            </center>
+        </td>
+    </tr>
+    <tr id="userdatarow">
+        <td colspan="2">
+            <table class="table table-striped" id="tblUserData">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            City
+                        </th>
+                        <th>
+
+                        </th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+
+
+<!-- Trigger the modal with a button -->
+
+
+<!-- Modal -->
+<div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Update User Detail</h4>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <tr>
+                        <td>
+                            User Id
+                        </td>
+                        <td>
+                            <input type="text" name="uid" readonly="readonly" value="" id="uid" class="form-control" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            User Name
+                        </td>
+                        <td>
+                            <input type="text" name="uname" value="" id="uname" class="form-control" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            User City
+                        </td>
+                        <td>
+                            <input type="text" name="ucity" value="" id="ucity" class="form-control" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <button id="btnUpdate" class="btn btn-danger">Update User Detail</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal" id="btnClose">Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+<script>
+    $(document).ready(function () {
+
+        GetUserData();
+
+        $("#btnSave").click(function () {
+
+            var username = $("#txtuname").val();
+            var usercity = $("#txtucity").val();
+
+            if (username != '' && usercity != '') {
+
+                $.ajax({
+                    url: 'http://localhost:51054/api/UserData',
+                    type: 'POST',
+                    data: { uname: username, ucity: usercity },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data> 0) {
+                            alert('user data saved');
+                            $('#tblUserData tbody').append("<tr><td>" + data + "</td><td>" + username + "</td><td>" + usercity + "</td><td><button class='btnEdit' data-toggle='modal' data-target='#myModal'>Edit User </button>  <button class='del'>Delete</button> </td></tr>")
+                            $("#txtuname").val('');
+                            $("#txtucity").val('');
+                        }
+                        else if (data == -1) {
+                            alert('please enter proper details');
+                        }
+                        else if (data == 0) {
+                            alert('please try again');
+                        }
+
+                    },
+                    error: function (err) { alert(err.error); }
+                });
+            }
+            else {
+                alert('please enter proper details');
+            }
+
+        });
+        var urow = null;
+        $('body').on('click', '.btnEdit', function () {
+            var row = $(this).closest("tr");      // Finds the closest row <tr>
+            var id = row.find("td:nth-child(1)").text();
+            var name = row.find("td:nth-child(2)").text();
+            var city = row.find("td:nth-child(3)").text();
+            urow = row;
+         
+            $('#uid').val(id);
+            $('#uname').val(name);
+            $('#ucity').val(city);
+        });
+
+        $("#btnUpdate").click(function () {
+
+            var row = $(this).closest('tr');
+
+            var username = $("#uname").val();
+            var usercity = $("#ucity").val();
+            var uid = $('#uid').val();
+
+            if (username != '' && usercity != '' && uid != 0) {
+
+                $.ajax({
+                    url: 'http://localhost:51054/api/UserData/'+uid,
+                    type: 'PUT',
+                    data: { uname: username, ucity: usercity },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data == 1) {
+                            alert('user data updated');
+                            $('#btnClose').click();
+                            GetUserData();
+                          
+                        }
+                        else if (data == -1) {
+                            alert('please enter proper details');
+                        }
+                        else if (data == 0) {
+                            alert('please try again');
+                        }
+
+                    },
+                    error: function (err) { alert(err.error); }
+                });
+            }
+            else {
+                alert('please enter proper details');
+            }
+
+        });
+
+        $('body').on('click', '.del', function () {
+            var des = confirm('Are you sure want to delete user info');
+
+            if (des) {
+
+                var row = $(this).closest("tr");      // Finds the closest row <tr>
+                var uid = row.find("td:nth-child(1)").text();
+              
+                $.ajax({
+                    url: 'http://localhost:51054/api/UserData/'+uid,
+                    type: 'DELETE',
+                    success: function (data) {
+                        if (data == 1) {
+                            alert('user detail removed');
+                            row.hide();
+                        }
+                        else if (data == -1) {
+                            alert('please select proper user detail');
+                        }
+                        else if (data == 0) {
+                            alert('please try again');
+                        }
+                    },
+                    error: function (xhr) { alert(xhr.responseText); }
+                });
+            }
+        });
+
+    });
+
+    function GetUserData() {
+        $('#userdatarow').hide();
+
+        $.ajax({
+            url: 'http://localhost:51054/api/UserData',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                $('#tblUserData tbody').empty();
+                $.each(data, function (i) {
+
+                    $('#tblUserData tbody').append("<tr><td>" + data[i].Id + "</td><td>" + data[i].uname + "</td><td>" + data[i].ucity + "</td><td><button class='btnEdit' data-toggle='modal' data-target='#myModal'>Edit User </button>  <button class='del'>Delete</button> </td></tr>")
+
+                });
+                $('#loader').hide();
+                $('#userdatarow').show();
+
+            },
+            error: function (err) { alert(err.error); }
+        });
+
+
+    }
+</script>
